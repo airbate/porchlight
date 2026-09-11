@@ -74,6 +74,7 @@ cd backend && uv run pytest
 
 | Doc | Content |
 |-----|---------|
+| `docs/主办方深度研究.md` | Sponsor business-line strategy & judge psychology → winning tactics (zh) |
 | `docs/立项文档.md` | Project brief: value prop, features, architecture, win mapping (zh) |
 | `docs/42天里程碑.md` | 42-day milestone plan M0→M3 (zh) |
 | `docs/ring-integration.md` | Ring tooling verification checklist (M0 gate) |

@@ -3,17 +3,18 @@
 > 状态：⚠️ 未核实。这是 M0 周（9/11–9/18）第一优先级任务。
 > 硬性要求回顾：项目须**运行时真实调用** Ring API/SDK/模拟器（不能只在 README 提及）；物理设备可选。
 
-## 待核实问题清单
+## 待核实问题清单（2026-09-12 更新：门户已抓取，见 docs/主办方深度研究.md）
 
 | # | 问题 | 为什么重要 | 核实方式 |
 |---|------|-----------|---------|
-| 1 | 本次 hackathon 的 Ring 开发者资源入口在哪（Devpost resources 页？developer.ring.com？） | 决定我们用哪套 API/SDK | 通读 Devpost 资源标签页 + Build Session 回放（youtu.be/ws61g53S2b4）Ring 段落 |
-| 2 | 模拟器如何获取：网页版？CLI？需要审批？ | 无硬件路径的根基 | 注册后实测 |
-| 3 | API 形态：REST？事件推送（webhook）还是轮询？图像帧怎么拿？ | 决定 `ring_client.py` 的适配器写法 | 读官方文档 |
-| 4 | 认证方式与凭据申请周期（OAuth? API key? 审核要几天？） | 若审核周期 >1 周要提前排期 | 注册流程实测，记录耗时 → 写进 Friction Log |
-| 5 | 是否收费（Ring Device Access 历史上有商业授权费） | 超出 $0 预算要触发 go/no-go | 注册/文档确认 |
-| 6 | 中国大陆网络访问 Ring 门户/模拟器是否稳定 | 日常开发依赖 | 实测，必要时配稳定代理 |
-| 7 | 演示要求："真实数据流"在 Ring 赛道的具体验收口径 | 视频拍摄方式依赖它 | 规则原文 + Q&A/updates 页 |
+| 1 | 注册 `developer.amazon.com/ring` → sandbox + Ring test account 如何获取？ | **接入路径已从"模拟器"修正为 sandbox + test account**（门户无 simulator 字样） | 实际注册走一遍，记录审批耗时 |
+| 2 | test account 是否自带 Ring 订阅（门户脚注 "Compatible Ring subscription required"） | 订阅门槛直接决定零成本可行性，make-or-break | 问 hackathon 经理 janet@devpost.com 或注册流程实测 |
+| 3 | OAuth 流程实测：Ring App 授权 → code 换 Bearer token；webhook HMAC 验签 | 已知形态，剩实现细节 | 文档 + 实测 |
+| 4 | 事件 webhook 的 human/animal/vehicle 分类与我们的 Bedrock 层如何分工 | 差异化红线：不重建平台已有分类 | 读 API 文档，设计去重逻辑 |
+| 5 | 官方 Ring MCP Server 可否用于我们的开发流程（API 检索/代码生成） | 提效 + 可写进 Friction Log 正面反馈 | 装上试用 |
+| 6 | hackathon 页承诺的"simulator"与门户"sandbox"是否同一物 | 决定无硬件演示形态 | 等 resources 页放出 / 问经理 |
+| 7 | 中国大陆访问门户/sandbox 稳定性 | 日常开发依赖 | 实测 |
+| 8 | "真实数据流"验收口径 | 决定演示视频拍摄方式 | 规则原文 + updates 页 |
 
 ## 核实后的动作
 

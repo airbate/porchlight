@@ -18,6 +18,16 @@
 - **Friction:** Hardware-optional paths (Ring simulator, Bee-on-Apple-Watch, Alexa+ simulated web experience) exist but are scattered across the rules text and the Build Session video; there is no single "track requirements + no-hardware path" matrix.
 - **Suggestion:** Add a per-track requirements matrix to the Devpost resources tab.
 
+### 2026-09-12 | Ring developer portal (developer.ring.com) | Finding the API docs & test path
+- **Tried:** Loading the portal root and `/docs` to locate API documentation and the promised hackathon simulator.
+- **Friction:** Root page is intermittently slow/unreachable (timed out twice); `/docs` returns a hard 404. Nowhere on the portal does the word "simulator" appear — testing is described as "self-serve sandbox environments" with "Ring test accounts," while the hackathon page advertises simulators. The two vocabularies don't match, so a new developer can't tell what they'll actually get.
+- **Also:** the requirement for a "Compatible Ring subscription" is only in a small footnote — for hackathon participants this is a make-or-break detail (does the test account include it?).
+- **Suggestion:** One canonical "start here" page per entry path (hackathon participant vs. commercial partner), consistent simulator/sandbox terminology, and the subscription requirement surfaced at registration — not in a footnote.
+
+### 2026-09-12 | Devpost | Prize and requirement info consistency
+- **Observation:** Hackathon page now clearly states AWS Builder qualifies via "Kiro Crew alone" and Open Source accepts unmerged PRs/forks — good clarity. But judges are still "announced soon" six weeks before the deadline, and the Resources tab lists no concrete SDK/simulator downloads yet.
+- **Suggestion:** Publish judge criteria weighting and resource links at contest start, not mid-contest.
+
 <!-- Add every new entry below this line. Aim for ≥10 high-quality entries by submission. -->
 
 ## Watchlist (to fill during M0)
