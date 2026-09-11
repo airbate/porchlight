@@ -55,7 +55,13 @@ cp .env.example .env         # then edit: AWS_REGION, BEDROCK_MODEL_ID, ...
 
 ```bash
 cd frontend
-npm install && npm run dev   # → http://127.0.0.1:5173
+npm install && npm run dev   # → http://127.0.0.1:5173 (Node 20+; Bun works too)
+```
+
+### Both at once
+
+```bash
+./scripts/dev.sh
 ```
 
 ### Tests
