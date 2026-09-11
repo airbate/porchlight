@@ -1,0 +1,29 @@
+[project]
+name = "porchlight-backend"
+version = "0.1.0"
+description = "PorchLight — an AI guardian at the front door of your aging parents (Ring + Amazon Bedrock)"
+readme = "../README.md"
+requires-python = ">=3.12"
+license = { text = "Apache-2.0" }
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "boto3>=1.35",
+    "pydantic>=2.8",
+    "pydantic-settings>=2.4",
+    "httpx>=0.27",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "ruff>=0.6",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
