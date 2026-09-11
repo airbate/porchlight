@@ -25,3 +25,9 @@ Thumbs.db
 # Demo artifacts
 backend/snapshots/
 recordings/
+
+# Soak test artifacts
+soak.log
+soak_*.log
+backend/soak.db
+backend/soak_snaps/
