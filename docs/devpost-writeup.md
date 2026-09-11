@@ -51,7 +51,7 @@ PorchLight turns any Ring doorbell (sandbox or device) into a 24/7 doorstep care
 `amazon-bedrock` · `amazon-nova` · `amazon-s3` · `amazon-eventbridge` · `ring-api` · `python` · `fastapi` · `react` · `typescript` · `vite`
 
 ## Links
-- Repo: {{GitHub URL}} (Apache-2.0)
+- Repo: https://github.com/airbate/porchlight (Apache-2.0, CI: ruff + 12 tests green)
 - Video (≤3 min, English): {{YouTube URL}}
 - Try it: `./scripts/dev.sh` → http://localhost:5173, then tap "Try a test event"
 

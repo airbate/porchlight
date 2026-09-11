@@ -1,5 +1,7 @@
 # PorchLight 🏮
 
+[![CI](https://github.com/airbate/porchlight/actions/workflows/ci.yml/badge.svg)](https://github.com/airbate/porchlight/actions/workflows/ci.yml)
+
 > An AI guardian at the front door of your aging parents.
 
 PorchLight turns any Ring doorbell into a 24/7 caretaker for seniors living alone. It understands every doorstep moment — visitors, package deliveries, unusual loitering, fall-like postures — filters out the noise, and keeps distant family in the loop with a plain-language **daily care report** plus **instant alerts** when something looks wrong.
