@@ -10,7 +10,7 @@ PorchLight 🏮
 An AI guardian at the front door of your aging parents. PorchLight understands every Ring doorstep moment and keeps distant family in the loop — calm reports daily, instant alerts when it matters.
 
 ## Inspiration
-In American culture, leaving the porch light on means *"I'm waiting for you to come home safe."* Millions of adult children can't leave that light on in person: {{~29% of US adults 65+ live alone}}, while their families juggle worry with busy lives. Ring doorbells already watch the doorstep — but they only *notify*, they don't *understand*. A stream of "motion detected" pings isn't care; it's noise. We wanted the doorbell to tell the family what actually matters, in plain language, with the calm cadence a worried daughter actually needs.
+In American culture, leaving the porch light on means *"I'm waiting for you to come home safe."* Millions of adult children can't leave that light on in person: more than a quarter of US adults 65+ live alone (US Census Bureau), while their families juggle worry with busy lives. Ring doorbells already watch the doorstep — but they only *notify*, they don't *understand*. A stream of "motion detected" pings isn't care; it's noise. We wanted the doorbell to tell the family what actually matters, in plain language, with the calm cadence a worried daughter actually needs.
 
 ## What it does
 PorchLight turns any Ring doorbell (sandbox or device) into a 24/7 doorstep caretaker for a senior living alone:
