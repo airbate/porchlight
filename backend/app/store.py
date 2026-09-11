@@ -20,7 +20,8 @@ CREATE TABLE IF NOT EXISTS events (
     snapshot_ref TEXT,
     alert_level  TEXT NOT NULL DEFAULT 'none',
     alert_reason TEXT NOT NULL DEFAULT '',
-    acknowledged INTEGER NOT NULL DEFAULT 0
+    acknowledged INTEGER NOT NULL DEFAULT 0,
+    repeat_count INTEGER NOT NULL DEFAULT 1
 );
 """
 
@@ -36,7 +37,7 @@ class EventStore:
     def save_event(self, event: DoorstepEvent) -> None:
         with self._lock:
             self._conn.execute(
-                "INSERT OR REPLACE INTO events VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                "INSERT OR REPLACE INTO events VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (
                     event.event_id,
                     event.occurred_at.isoformat(),
@@ -50,9 +51,35 @@ class EventStore:
                     event.alert_level,
                     event.alert_reason,
                     int(event.acknowledged),
+                    event.repeat_count,
                 ),
             )
             self._conn.commit()
+
+    def bump_repeat(self, event_id: str) -> int:
+        """Merge a duplicate into an existing entry: return the new repeat_count."""
+        with self._lock:
+            self._conn.execute(
+                "UPDATE events SET repeat_count = repeat_count + 1 WHERE event_id = ?",
+                (event_id,),
+            )
+            self._conn.commit()
+            row = self._conn.execute(
+                "SELECT repeat_count FROM events WHERE event_id = ?", (event_id,)
+            ).fetchone()
+        return row["repeat_count"] if row else 1
+
+    def latest_same_category(
+        self, category: AnalysisCategory, since: datetime
+    ) -> DoorstepEvent | None:
+        """Most recent event of this category at or after `since` (merge candidate)."""
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT * FROM events WHERE category = ? AND occurred_at >= ? "
+                "ORDER BY occurred_at DESC LIMIT 1",
+                (category.value, since.isoformat()),
+            ).fetchone()
+        return self._row_to_event(row) if row else None
 
     def get_event(self, event_id: str) -> DoorstepEvent | None:
         with self._lock:
@@ -115,4 +142,5 @@ class EventStore:
             alert_level=row["alert_level"],
             alert_reason=row["alert_reason"],
             acknowledged=bool(row["acknowledged"]),
+            repeat_count=row["repeat_count"],
         )

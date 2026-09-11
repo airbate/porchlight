@@ -119,6 +119,28 @@ def test_fixture_frames_are_jpeg():
         assert frame[:2] == b"\xff\xd8", f"{scenario} frame should be a JPEG"
 
 
+def test_duplicate_events_merge_within_window(tmp_path):
+    """Same category inside the merge window → one entry with repeat_count, no new alert."""
+    store, pipeline = _offline_pipeline(tmp_path)
+    now = datetime.now(UTC)
+
+    e1, _ = pipeline.ingest(RawRingEvent(event_id="m1", occurred_at=now, scenario="visitor"))
+    e2, a2 = pipeline.ingest(
+        RawRingEvent(event_id="m2", occurred_at=now + timedelta(minutes=3), scenario="visitor")
+    )
+    assert e2.event_id == e1.event_id
+    assert e2.repeat_count == 2
+    assert a2.level == "none"
+    assert len(store.list_events()) == 1
+
+    e3, _ = pipeline.ingest(
+        RawRingEvent(event_id="m3", occurred_at=now + timedelta(minutes=4), scenario="package_delivery")
+    )
+    assert e3.event_id == "m3"
+    assert e3.repeat_count == 1
+    assert len(store.list_events()) == 2
+
+
 def test_digest_rhythm_anomaly(tmp_path):
     store, pipeline = _offline_pipeline(tmp_path)
     vision = BedrockVision(Settings(aws_region="us-east-1"))

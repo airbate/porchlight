@@ -39,6 +39,10 @@ class Settings(BaseSettings):
     quiet_hours_start: int = 22  # local hour, loitering at night escalates
     quiet_hours_end: int = 7
 
+    # Noise control: same-category events within this window merge into one
+    # feed entry (repeat_count) instead of spamming the family
+    merge_window_minutes: int = 10
+
 
 @lru_cache
 def get_settings() -> Settings:

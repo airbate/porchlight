@@ -54,6 +54,7 @@ class DoorstepEvent(BaseModel):
     alert_level: str = "none"  # "critical" | "high" | "none"
     alert_reason: str = ""
     acknowledged: bool = False
+    repeat_count: int = 1  # same-category events merged within the noise window
 
 
 class Alert(BaseModel):

@@ -25,6 +25,7 @@ interface DoorstepEvent {
   alert_level: AlertLevel;
   alert_reason: string;
   acknowledged: boolean;
+  repeat_count: number;
 }
 
 interface CareDigest {
@@ -175,7 +176,12 @@ export default function App() {
                     </span>
                   )}
                   <span className="body">
-                    <strong>{meta.label}</strong>
+                    <strong>
+                      {meta.label}
+                      {event.repeat_count > 1 && (
+                        <span className="repeat"> ×{event.repeat_count}</span>
+                      )}
+                    </strong>
                     <span className="summary">{event.analysis.summary}</span>
                     {event.alert_level !== "none" && !event.acknowledged && (
                       <button className="btn small" onClick={() => ack(event.event_id)}>

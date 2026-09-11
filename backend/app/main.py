@@ -24,7 +24,8 @@ store = EventStore(settings.database_path)
 vision = BedrockVision(settings)
 snapshots = SnapshotStore(settings)
 notifier = Notifier(settings)
-pipeline = Pipeline(store, vision, snapshots, notifier)
+pipeline = Pipeline(store, vision, snapshots, notifier,
+                    merge_window_minutes=settings.merge_window_minutes)
 
 
 @asynccontextmanager
