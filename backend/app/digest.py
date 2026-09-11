@@ -29,7 +29,7 @@ def build_daily_digest(
         "No notable doorstep activity today."
     ]
 
-    anomaly = _rhythm_anomaly(events)
+    anomaly = _rhythm_anomaly(store, events, day)
     offline = vision.offline
     text = "\n".join(lines)
     try:
@@ -40,8 +40,16 @@ def build_daily_digest(
     return CareDigest(date=start.date().isoformat(), text=text, anomaly=anomaly, offline=offline)
 
 
-def _rhythm_anomaly(day_events: list) -> str | None:
-    """Detect a broken daily rhythm. M2 will extend this with entry/exit patterns."""
-    if not day_events:
-        return "No motion at the door for over 24 hours — worth a quick check-in call."
-    return None
+def _rhythm_anomaly(store: EventStore, day_events: list, day: datetime) -> str | None:
+    """Detect a broken daily rhythm: the door going unusually quiet is itself a signal."""
+    interesting = [e for e in day_events if e.analysis.category != AnalysisCategory.AMBIENT_NOISE]
+    if interesting:
+        return None
+    previous = [
+        e
+        for e in store.events_between(day - timedelta(hours=48), day)
+        if e.analysis.category != AnalysisCategory.AMBIENT_NOISE
+    ]
+    if previous:
+        return "No real door activity for over 24 hours — worth a quick check-in call."
+    return "A very quiet day at the door — no visitors yet."

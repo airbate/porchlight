@@ -106,9 +106,12 @@ class BedrockVision:
         category = (
             AnalysisCategory(scenario_hint) if scenario_hint in _VALID else AnalysisCategory.UNKNOWN
         )
+        # Confidence 0.75 keeps the offline demo coherent: alert rules evaluate
+        # the same way they will live, and the "(offline stub)" summary marks
+        # the analysis as synthetic on every surface.
         return DoorstepAnalysis(
             category=category,
-            confidence=0.0,
+            confidence=0.75,
             summary=_STUB_SUMMARIES[category.value] + " (offline stub)",
             model="offline-stub",
             offline=True,

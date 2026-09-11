@@ -1,7 +1,8 @@
+import base64
 from datetime import UTC, datetime
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class AnalysisCategory(str, Enum):
@@ -22,13 +23,24 @@ class DoorstepAnalysis(BaseModel):
 
 
 class RawRingEvent(BaseModel):
-    """Normalised event coming from the Ring simulator / device (or fixtures)."""
+    """Normalised event coming from the Ring sandbox / simulator (or fixtures).
+
+    Over JSON the frame arrives base64-encoded; the validator decodes it so
+    `image` is always raw JPEG bytes in Python.
+    """
 
     event_id: str
     occurred_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     scenario: str = "unknown"  # simulator scenario label, e.g. "visitor"
     image: bytes | None = None  # doorbell frame, jpeg
     metadata: dict[str, str] = Field(default_factory=dict)
+
+    @field_validator("image", mode="before")
+    @classmethod
+    def _decode_base64_frame(cls, v):
+        if isinstance(v, str):
+            return base64.b64decode(v)
+        return v
 
 
 class DoorstepEvent(BaseModel):
@@ -38,8 +50,10 @@ class DoorstepEvent(BaseModel):
     occurred_at: datetime
     scenario: str
     analysis: DoorstepAnalysis
-    snapshot_ref: str | None = None  # S3 key in live mode
-    alerted: bool = False
+    snapshot_ref: str | None = None  # local:// or s3:// ref in live mode
+    alert_level: str = "none"  # "critical" | "high" | "none"
+    alert_reason: str = ""
+    acknowledged: bool = False
 
 
 class Alert(BaseModel):

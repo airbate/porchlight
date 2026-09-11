@@ -5,10 +5,24 @@ from fastapi.testclient import TestClient
 from app.alerts import evaluate_alert
 from app.analysis.bedrock_vision import BedrockVision
 from app.config import Settings
+from app.digest import build_daily_digest
+from app.fixtures import render_frame
 from app.main import app
 from app.models import AnalysisCategory, DoorstepAnalysis, DoorstepEvent, RawRingEvent
+from app.notifiers import Notifier
 from app.pipeline import Pipeline
+from app.ring_client import verify_signature
+from app.snapshots import SnapshotStore
 from app.store import EventStore
+
+
+def _offline_pipeline(tmp_path):
+    store = EventStore(str(tmp_path / "t.db"))
+    vision = BedrockVision(Settings(aws_region="us-east-1"))
+    vision._offline = True  # force the stub so tests never touch AWS
+    snapshots = SnapshotStore(Settings(snapshots_dir=str(tmp_path / "snaps")))
+    pipeline = Pipeline(store, vision, snapshots, Notifier(Settings()))
+    return store, pipeline
 
 
 def test_health_offline_mode():
@@ -21,19 +35,20 @@ def test_health_offline_mode():
 
 
 def test_simulate_pipeline_end_to_end(tmp_path):
-    store = EventStore(str(tmp_path / "t.db"))
-    vision = BedrockVision(Settings(aws_region="us-east-1"))
-    # force offline stub path so the test never touches AWS
-    vision._offline = True
-
-    pipeline = Pipeline(store, vision)
+    store, pipeline = _offline_pipeline(tmp_path)
     event, alert = pipeline.ingest(
-        RawRingEvent(event_id="e1", occurred_at=datetime.now(UTC), scenario="package_delivery")
+        RawRingEvent(
+            event_id="e1",
+            occurred_at=datetime.now(UTC),
+            scenario="package_delivery",
+            image=render_frame("package_delivery"),
+        )
     )
 
     assert event.analysis.category == AnalysisCategory.PACKAGE_DELIVERY
     assert event.analysis.offline is True
     assert alert.level == "none"
+    assert event.snapshot_ref, "fixture frame should be stored as a snapshot"
     assert len(store.list_events()) == 1
 
 
@@ -60,6 +75,18 @@ def test_night_loitering_escalates():
     assert night.level == "high"
 
 
+def test_offline_stub_confidence_drives_alerts(tmp_path):
+    """Offline stub confidence must be high enough for alert rules to evaluate
+    the live way — otherwise the demo never shows the alert flow."""
+    store, pipeline = _offline_pipeline(tmp_path)
+    event, alert = pipeline.ingest(
+        RawRingEvent(event_id="e3", occurred_at=datetime.now(UTC), scenario="fall_suspected")
+    )
+    assert alert.level == "critical"
+    assert event.alert_level == "critical"
+    assert store.list_alerts()[0].event_id == "e3"
+
+
 def test_store_roundtrip(tmp_path):
     store = EventStore(str(tmp_path / "t.db"))
     analysis = DoorstepAnalysis(
@@ -75,3 +102,45 @@ def test_store_roundtrip(tmp_path):
     loaded = store.list_events()
     assert loaded[0].event_id == "e2"
     assert loaded[0].analysis.category == AnalysisCategory.VISITOR
+
+
+def test_webhook_signature():
+    body = b'{"event_id": "x"}'
+    assert verify_signature(body, None, None)  # dev mode: no secret configured
+    sig = "sha256=" + __import__("hmac").new(b"s", body, __import__("hashlib").sha256).hexdigest()
+    assert verify_signature(body, sig, "s")
+    assert not verify_signature(body, None, "s")
+    assert not verify_signature(body, "sha256=deadbeef", "s")
+
+
+def test_fixture_frames_are_jpeg():
+    for scenario in ("visitor", "package_delivery", "loitering", "fall_suspected", "ambient_noise"):
+        frame = render_frame(scenario)
+        assert frame[:2] == b"\xff\xd8", f"{scenario} frame should be a JPEG"
+
+
+def test_digest_rhythm_anomaly(tmp_path):
+    store, pipeline = _offline_pipeline(tmp_path)
+    vision = BedrockVision(Settings(aws_region="us-east-1"))
+    vision._offline = True
+
+    now = datetime.now(UTC)
+    # yesterday: real activity; today: nothing
+    yesterday = pipeline.ingest(
+        RawRingEvent(
+            event_id="y1",
+            occurred_at=now - timedelta(hours=30),
+            scenario="visitor",
+        )
+    )
+    assert yesterday[0].event_id == "y1"
+
+    digest = build_daily_digest(store, vision, day=now)
+    assert digest.anomaly is not None
+    assert "check-in" in digest.anomaly
+    assert digest.offline is True
+
+    # today: a visitor arrives → anomaly clears
+    pipeline.ingest(RawRingEvent(event_id="t1", occurred_at=now, scenario="visitor"))
+    digest = build_daily_digest(store, vision, day=now)
+    assert digest.anomaly is None

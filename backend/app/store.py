@@ -9,16 +9,18 @@ from .models import AnalysisCategory, DoorstepAnalysis, DoorstepEvent
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS events (
-    event_id    TEXT PRIMARY KEY,
-    occurred_at TEXT NOT NULL,
-    scenario    TEXT NOT NULL,
-    category    TEXT NOT NULL,
-    confidence  REAL NOT NULL,
-    summary     TEXT NOT NULL,
-    model       TEXT NOT NULL,
-    offline     INTEGER NOT NULL DEFAULT 0,
+    event_id     TEXT PRIMARY KEY,
+    occurred_at  TEXT NOT NULL,
+    scenario     TEXT NOT NULL,
+    category     TEXT NOT NULL,
+    confidence   REAL NOT NULL,
+    summary      TEXT NOT NULL,
+    model        TEXT NOT NULL,
+    offline      INTEGER NOT NULL DEFAULT 0,
     snapshot_ref TEXT,
-    alerted     INTEGER NOT NULL DEFAULT 0
+    alert_level  TEXT NOT NULL DEFAULT 'none',
+    alert_reason TEXT NOT NULL DEFAULT '',
+    acknowledged INTEGER NOT NULL DEFAULT 0
 );
 """
 
@@ -34,7 +36,7 @@ class EventStore:
     def save_event(self, event: DoorstepEvent) -> None:
         with self._lock:
             self._conn.execute(
-                "INSERT OR REPLACE INTO events VALUES (?,?,?,?,?,?,?,?,?,?)",
+                "INSERT OR REPLACE INTO events VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
                 (
                     event.event_id,
                     event.occurred_at.isoformat(),
@@ -45,20 +47,46 @@ class EventStore:
                     event.analysis.model,
                     int(event.analysis.offline),
                     event.snapshot_ref,
-                    int(event.alerted),
+                    event.alert_level,
+                    event.alert_reason,
+                    int(event.acknowledged),
                 ),
             )
             self._conn.commit()
 
-    def set_alerted(self, event_id: str) -> None:
+    def get_event(self, event_id: str) -> DoorstepEvent | None:
         with self._lock:
-            self._conn.execute("UPDATE events SET alerted = 1 WHERE event_id = ?", (event_id,))
+            row = self._conn.execute(
+                "SELECT * FROM events WHERE event_id = ?", (event_id,)
+            ).fetchone()
+        return self._row_to_event(row) if row else None
+
+    def ack_alert(self, event_id: str) -> bool:
+        """First ack wins: True only when the event exists and wasn't acked yet."""
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT acknowledged FROM events WHERE event_id = ?", (event_id,)
+            ).fetchone()
+            if row is None:
+                return False
+            self._conn.execute(
+                "UPDATE events SET acknowledged = 1 WHERE event_id = ?", (event_id,)
+            )
             self._conn.commit()
+            return not row["acknowledged"]
 
     def list_events(self, limit: int = 100) -> list[DoorstepEvent]:
         with self._lock:
             rows = self._conn.execute(
                 "SELECT * FROM events ORDER BY occurred_at DESC LIMIT ?", (limit,)
+            ).fetchall()
+        return [self._row_to_event(row) for row in rows]
+
+    def list_alerts(self, limit: int = 50) -> list[DoorstepEvent]:
+        with self._lock:
+            rows = self._conn.execute(
+                "SELECT * FROM events WHERE alert_level != 'none' ORDER BY occurred_at DESC LIMIT ?",
+                (limit,),
             ).fetchall()
         return [self._row_to_event(row) for row in rows]
 
@@ -84,5 +112,7 @@ class EventStore:
                 offline=bool(row["offline"]),
             ),
             snapshot_ref=row["snapshot_ref"],
-            alerted=bool(row["alerted"]),
+            alert_level=row["alert_level"],
+            alert_reason=row["alert_reason"],
+            acknowledged=bool(row["acknowledged"]),
         )

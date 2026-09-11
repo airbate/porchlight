@@ -11,19 +11,33 @@ class Settings(BaseSettings):
     app_name: str = "PorchLight"
     database_path: str = "porchlight.db"
 
+    # CORS: the family dashboard origin
+    frontend_origin: str = "http://127.0.0.1:5173"
+
     # Amazon Bedrock
     aws_region: str = "us-east-1"
     bedrock_model_id: str = "us.amazon.nova-lite-v1:0"
+
+    # Snapshots: S3 bucket name enables S3 storage, otherwise local dir
+    s3_bucket: str | None = None
+    snapshots_dir: str = "snapshots"
+    snapshot_presign_seconds: int = 3600
+
+    # Alert fan-out: optional outbound webhook (e.g. push/email bridge)
+    alert_webhook_url: str | None = None
+
+    # Ring integration (exact endpoints verified in M0 — docs/ring-integration.md).
+    # Webhooks from the Ring sandbox carry an HMAC signature we verify.
+    ring_webhook_secret: str | None = None  # None = verification off (local dev only)
+    ring_signature_header: str = "x-ring-signature"
+    ring_api_base_url: str | None = None  # sandbox base URL once M0 confirms
+    ring_bearer_token: str | None = None
 
     # Alert policy
     fall_confidence_threshold: float = 0.6
     loitering_confidence_threshold: float = 0.7
     quiet_hours_start: int = 22  # local hour, loitering at night escalates
     quiet_hours_end: int = 7
-
-    # Ring integration (exact endpoints verified in M0 — docs/ring-integration.md)
-    ring_simulator_base_url: str | None = None
-    ring_poll_interval_seconds: float = 2.0
 
 
 @lru_cache

@@ -13,61 +13,63 @@ In American culture, leaving the porch light on means *"I'm waiting for you to c
 ## How it works
 
 ```
-Ring simulator/device ──► Ingest API ──► Amazon Bedrock (Nova Lite, multimodal)
-                              │                 │ structured JSON: visitor / package /
-                              │                 │ loitering / fall_suspected / ambient_noise
-                              ▼                 ▼
-                          S3 snapshots    Rules engine (confidence + quiet hours)
-                                                │
-                          Family PWA ◄──────────┴── daily Care Digest (EventBridge Scheduler)
+Ring sandbox / device ──signed webhook──► Ingest API (HMAC-verified)
+        │                                      │
+  (dev: simulator/                        1. snapshot → S3 / local
+   stands in until                            2. Amazon Bedrock (Nova Lite, multimodal)
+   M0 wiring)                                    → visitor / package / loitering /
+                                                   fall_suspected / ambient_noise
+                                               3. rules engine (confidence + quiet hours)
+                                                      │
+                              Family PWA ◄──alerts────┴── daily Care Digest (EventBridge)
 ```
 
 - **Doorstep Sense** — every Ring event frame is classified by Amazon Nova via the Bedrock `Converse` API; noise (branches, shadows, passing cars) is filtered before it ever reaches the family.
-- **Care Digest** — a natural-language report of the day at the door, plus rhythm anomaly detection (e.g., no one left the house for 24h).
-- **Instant Alerts** — high-confidence emergencies (suspected fall, late-night loiterer) reach designated family members in seconds, with snapshot + AI summary + one-tap actions.
+- **Care Digest** — a natural-language report of the day at the door, plus rhythm anomaly detection (e.g., no real door activity for 24h → "worth a check-in call").
+- **Instant Alerts** — high-confidence emergencies (suspected fall, late-night loiterer) reach designated family members in seconds: dashboard banner, optional webhook fan-out, snapshot attached, one tap to acknowledge.
 
 ## Repository layout
 
 ```
-backend/    FastAPI ingest + Bedrock analysis + rules engine (Python 3.12+, uv)
-frontend/   Family dashboard PWA (React + Vite + TypeScript)
-docs/       Project brief, milestones, friction log, AWS integration map (部分中文)
+backend/     FastAPI ingest + Bedrock analysis + rules engine (Python 3.12+, uv)
+  app/         pipeline, HMAC webhook verification, snapshot store, notifiers
+  simulator/   dev stand-in for the Ring sandbox: pushes signed events w/ frames
+  tests/       12 automated tests (pipeline, HMAC, snapshots, alerts, digest)
+frontend/    Family dashboard PWA (React + Vite + TypeScript)
+docs/        Research, brief, milestones, friction log, submission drafts (部分中文)
+scripts/     dev launcher
 ```
 
-## Quick start
+## Run the demo
 
-### Backend
+```bash
+./scripts/dev.sh             # backend on :8000, dashboard on :5173
+```
+
+Open http://127.0.0.1:5173 and tap **"Try a test event"** — trigger a visitor, a
+package, a suspected fall. Or drive the signed-webhook path exactly like the real
+sandbox will:
 
 ```bash
 cd backend
-uv sync                      # creates .venv from uv.lock
-uv run uvicorn app.main:app --reload
-# → http://127.0.0.1:8000/docs  (GET /health, GET /events, POST /dev/simulate)
+RING_WEBHOOK_SECRET=dev-secret uv run uvicorn app.main:app --port 8000
+PORCHLIGHT_INGEST_URL=http://127.0.0.1:8000/events/ingest \
+RING_WEBHOOK_SECRET=dev-secret uv run uvicorn simulator.main:app --port 8322
+curl -X POST "http://127.0.0.1:8322/trigger?scenario=fall_suspected"
 ```
 
-Without AWS credentials the backend runs in **offline mode**: Bedrock calls return a graceful stub so the demo never breaks. Set AWS credentials + enable Nova model access to go live:
+Without AWS credentials the backend runs in a clearly-marked **offline-stub mode**
+so the demo never breaks; add credentials + enable the Nova model to go live:
 
 ```bash
-cp .env.example .env         # then edit: AWS_REGION, BEDROCK_MODEL_ID, ...
+cp .env.example .env         # then edit: AWS_REGION, BEDROCK_MODEL_ID, RING_WEBHOOK_SECRET, ...
 ```
 
-### Frontend
+## Tests
 
 ```bash
-cd frontend
-npm install && npm run dev   # → http://127.0.0.1:5173 (Node 20+; Bun works too)
-```
-
-### Both at once
-
-```bash
-./scripts/dev.sh
-```
-
-### Tests
-
-```bash
-cd backend && uv run pytest
+cd backend && uv run pytest        # 12 tests: pipeline, HMAC, snapshots, alerts, digest
+cd frontend && npm install && npm run build   # typecheck + production build
 ```
 
 ## Documentation
@@ -79,6 +81,9 @@ cd backend && uv run pytest
 | `docs/42天里程碑.md` | 42-day milestone plan M0→M3 (zh) |
 | `docs/ring-integration.md` | Ring tooling verification checklist (M0 gate) |
 | `docs/aws-integration.md` | AWS services map for the AWS Builder mini-challenge |
+| `docs/devpost-writeup.md` | Submission text draft (en) |
+| `docs/video-script.md` | 3-minute demo video script & shot list |
+| `docs/product-feedback.md` | Product feedback + feature requests drafts (en) |
 | `docs/friction-log.md` | Real friction we hit with Amazon/AWS tooling (+10% score) |
 
 ## License

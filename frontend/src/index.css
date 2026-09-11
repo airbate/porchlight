@@ -6,6 +6,7 @@
   --accent: #d97b29; /* porch-light amber */
   --alert: #c0392b;
   --muted: #8a7f72;
+  --line: #eee3d3;
 }
 
 * {
@@ -22,8 +23,52 @@ body {
 .shell {
   max-width: 640px;
   margin: 0 auto;
-  padding: 2rem 1.25rem 4rem;
+  padding: 1.5rem 1.25rem 4rem;
 }
+
+/* ---------- alerts ---------- */
+
+.banner {
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+  margin-bottom: 1.25rem;
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(192, 57, 43, 0.25);
+}
+.banner.critical {
+  background: linear-gradient(135deg, #c0392b, #96281b);
+  animation: pulse 2.4s ease-in-out infinite;
+}
+.banner.high {
+  background: linear-gradient(135deg, #d97b29, #b85c10);
+}
+.banner-title {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+.banner-when {
+  font-weight: 400;
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+.banner p {
+  margin: 0.4rem 0 0.8rem;
+  line-height: 1.4;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: 0 6px 18px rgba(192, 57, 43, 0.25);
+  }
+  50% {
+    box-shadow: 0 6px 26px rgba(192, 57, 43, 0.5);
+  }
+}
+
+/* ---------- header ---------- */
 
 header h1 {
   margin: 0;
@@ -54,10 +99,12 @@ h2 {
   margin: 2rem 0 0.6rem;
 }
 
+/* ---------- cards ---------- */
+
 .digest,
 .events ul {
   background: var(--card);
-  border: 1px solid #eee3d3;
+  border: 1px solid var(--line);
   border-radius: 14px;
   padding: 1rem 1.1rem;
 }
@@ -70,9 +117,11 @@ h2 {
 
 .anomaly {
   margin: 0.6rem 0 0;
-  color: var(--alert);
+  color: #b85c10;
   font-weight: 600;
 }
+
+/* ---------- event feed ---------- */
 
 .events {
   padding: 0;
@@ -87,7 +136,7 @@ h2 {
   display: flex;
   align-items: center;
   gap: 0.85rem;
-  padding: 0.75rem 1.1rem;
+  padding: 0.7rem 1.1rem;
   border-bottom: 1px solid #f3ead9;
 }
 .event:last-child {
@@ -100,10 +149,20 @@ h2 {
 .icon {
   font-size: 1.4rem;
 }
+.thumb {
+  width: 64px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  flex: none;
+}
 .body {
   flex: 1;
   display: flex;
   flex-direction: column;
+  gap: 0.25rem;
+  align-items: flex-start;
 }
 .summary {
   color: var(--muted);
@@ -113,10 +172,65 @@ time {
   color: var(--muted);
   font-size: 0.8rem;
   font-variant-numeric: tabular-nums;
+  align-self: flex-start;
+}
+
+/* ---------- buttons & demo strip ---------- */
+
+.btn {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.btn.primary {
+  background: #fff;
+  border: none;
+  font-weight: 700;
+  color: #96281b;
+}
+.btn.small {
+  padding: 0.2rem 0.65rem;
+  font-size: 0.78rem;
+  border-color: #f0c9c2;
+  color: var(--alert);
+}
+
+.demo {
+  margin-top: 1.6rem;
+}
+.linklike {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--ink);
+  cursor: pointer;
+}
+.demo-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
 }
 
 .muted {
   color: var(--muted);
+}
+.muted.small {
+  font-size: 0.8rem;
 }
 
 code {
@@ -124,4 +238,11 @@ code {
   padding: 0.1rem 0.35rem;
   border-radius: 5px;
   font-size: 0.85em;
+}
+
+@media (max-width: 480px) {
+  .thumb {
+    width: 52px;
+    height: 40px;
+  }
 }
